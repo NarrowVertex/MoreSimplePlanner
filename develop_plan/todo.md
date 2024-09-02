@@ -1,0 +1,18 @@
+## Work todo list
+- Database function <- In progress
+    - create, edit, remove task
+    - show tasks by list with filters
+- Console
+    - get user input
+    - navigate into command or LLM
+    - show print
+- Execute command function
+    - execute database function by user command
+    - can execute function from LLM
+- Date calculate tool for LLM
+    - actual LLM can't calculate date
+    - by this, LLM need the tool for this
+- template for LLM
+    - standard LLM template for assigning a rule
+- RAG with Database
+    - let LLM to search the task info
