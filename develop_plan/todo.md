@@ -2,11 +2,11 @@
 - Database function
     - create, edit, remove task
     - show tasks by list with filters
-- Console <- In progress
+- Console
     - get user input
     - navigate into command or LLM
     - show print
-- Execute command function
+- Execute command function <- In progress
     - execute database function by user command
     - can execute function from LLM
 - Date calculate tool for LLM
