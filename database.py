@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+
 
 class Database:
     def __init__(self):
@@ -17,9 +19,12 @@ class Database:
         self.conn.commit()
 
     def add_task(self, task_id, context, date, duration):
+        date = datetime.strptime(str(date), "%Y%m%d%H%M")
+        date_str = date.strftime("%Y-%m-%d %H:%M:%S")
+
         self.cursor.execute('''
                 INSERT INTO tasks (task_id, context, date, duration) VALUES (?, ?, ?, ?)
-                ''', (task_id, context, date, duration))
+                ''', (task_id, context, date_str, duration))
 
         self.conn.commit()
 
@@ -31,6 +36,23 @@ class Database:
         print(f"found data: {len(rows)}")
         for row in rows:
             print(row)
+
+    def show_within_time(self, time, duration):
+        current_time = datetime.strptime(str(time), "%Y%m%d%H%M")
+        current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+        query = '''
+            SELECT *
+            FROM tasks
+            WHERE DATETIME(?) <= DATETIME(date)
+            AND DATETIME(date, '+' || duration || ' minutes') <= DATETIME(?, '+' || ? || ' minutes')
+            '''
+
+        # SQL 쿼리 실행
+        self.cursor.execute(query, (current_time_str, current_time_str, duration))
+        rows = self.cursor.fetchall()
+
+        return rows
 
     def remove_task(self, task_id):
         self.cursor.execute('''
@@ -44,9 +66,19 @@ class Database:
         self.conn.close()
 
 
+"""
 db = Database()
 db.create_table()
+db.remove_task("test_task")
 db.add_task("test_task", "test task", 202409031544, 90)
 db.show_all()
+
+result = db.show_within_time(202409011559, 165080)
+print(result)
+
+result = db.show_within_time(202409101544, 50)
+print(result)
+
 db.remove_task("test_task")
 db.close()
+"""
