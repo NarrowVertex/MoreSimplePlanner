@@ -2,6 +2,14 @@ import sqlite3
 from datetime import datetime
 
 
+def format_datetime_str(value):
+    return datetime2str(datetime.strptime(str(value), "%Y%m%d%H%M"))
+
+
+def datetime2str(value):
+    return value.strftime("%Y-%m-%d %H:%M:%S")
+
+
 class Database:
     def __init__(self):
         self.conn = sqlite3.connect('database.db')
@@ -19,8 +27,7 @@ class Database:
         self.conn.commit()
 
     def add_task(self, task_id, context, date, duration):
-        date = datetime.strptime(str(date), "%Y%m%d%H%M")
-        date_str = date.strftime("%Y-%m-%d %H:%M:%S")
+        date_str = format_datetime_str(date)
 
         self.cursor.execute('''
                 INSERT INTO tasks (task_id, context, date, duration) VALUES (?, ?, ?, ?)
@@ -33,13 +40,10 @@ class Database:
 
         rows = self.cursor.fetchall()
 
-        print(f"found data: {len(rows)}")
-        for row in rows:
-            print(row)
+        return rows
 
     def show_within_time(self, time, duration):
-        current_time = datetime.strptime(str(time), "%Y%m%d%H%M")
-        current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        current_time_str = format_datetime_str(time)
 
         query = '''
             SELECT *
@@ -54,10 +58,27 @@ class Database:
 
         return rows
 
+    def update_task(self, task_id, element_name, value):
+        if element_name == "context":
+            value = str(value)
+        elif element_name == "date":
+            value = format_datetime_str(value)
+        elif element_name == "duration":
+            value = int(value)
+        else:
+            print(f"There is no element[{element_name}] in Table[tasks]")
+            return
+
+        self.cursor.execute(f'''
+               UPDATE tasks SET {element_name} = ? WHERE task_id = ?
+               ''', (value, task_id))
+
+        self.conn.commit()
+
     def remove_task(self, task_id):
         self.cursor.execute('''
                     DELETE FROM tasks WHERE task_id = ?
-                    ''', ("test_task",))
+                    ''', (task_id,))
 
         # 변경 사항을 저장합니다.
         self.conn.commit()
