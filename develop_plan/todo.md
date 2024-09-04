@@ -6,10 +6,10 @@
     - get user input
     - navigate into command or LLM
     - show print
-- Execute command function <- In progress
+- Execute command function
     - execute database function by user command
     - can execute function from LLM
-- Date calculate tool for LLM
+- Date calculate tool for LLM  <- In progress
     - actual LLM can't calculate date
     - by this, LLM need the tool for this
 - template for LLM
