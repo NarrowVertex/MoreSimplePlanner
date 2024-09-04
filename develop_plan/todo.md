@@ -1,8 +1,8 @@
 ## Work todo list
-- Database function <- In progress
+- Database function
     - create, edit, remove task
     - show tasks by list with filters
-- Console
+- Console <- In progress
     - get user input
     - navigate into command or LLM
     - show print
