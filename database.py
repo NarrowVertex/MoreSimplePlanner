@@ -3,7 +3,17 @@ from datetime import datetime
 
 
 def format_datetime_str(value):
-    return datetime2str(datetime.strptime(str(value), "%Y%m%d%H%M"))
+    def check_datetime_format(date_str):
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+            return True
+        except ValueError:
+            # 형식에 맞지 않는 경우
+            return False
+
+    if not check_datetime_format(value):
+        return datetime2str(datetime.strptime(str(value), "%Y%m%d%H%M"))
+    return value
 
 
 def datetime2str(value):
@@ -19,19 +29,29 @@ class Database:
         self.cursor.execute('''
                     CREATE TABLE IF NOT EXISTS tasks (
                         task_id TEXT PRIMARY KEY,
-                        context TEXT,
+                        name TEXT,
                         date LONG,
                         duration INTEGER
                     )
                     ''')
         self.conn.commit()
 
-    def add_task(self, task_id, context, date, duration):
+    def add_task(self, task_id, name, date, duration):
         date_str = format_datetime_str(date)
 
         self.cursor.execute('''
-                INSERT INTO tasks (task_id, context, date, duration) VALUES (?, ?, ?, ?)
-                ''', (task_id, context, date_str, duration))
+                INSERT INTO tasks (task_id, name, date, duration) VALUES (?, ?, ?, ?)
+                ''', (task_id, name, date_str, duration))
+
+        self.conn.commit()
+
+    def add_tasks(self, tasks):
+        tasks = [(task_id, name, format_datetime_str(date), duration) for
+                 task_id, name, date, duration in tasks]
+
+        self.cursor.executemany('''
+                    INSERT INTO tasks (task_id, name, date, duration) VALUES (?, ?, ?, ?)
+                    ''', tasks)
 
         self.conn.commit()
 
@@ -42,24 +62,25 @@ class Database:
 
         return rows
 
-    def show_within_time(self, time, duration):
-        current_time_str = format_datetime_str(time)
+    def show_within_time(self, start_time, end_time):
+        start_time_str = format_datetime_str(start_time)
+        end_time_str = format_datetime_str(end_time)
 
         query = '''
             SELECT *
             FROM tasks
-            WHERE DATETIME(?) <= DATETIME(date)
-            AND DATETIME(date, '+' || duration || ' minutes') <= DATETIME(?, '+' || ? || ' minutes')
+            WHERE DATETIME(date) >= DATETIME(?)
+            AND DATETIME(date, '+' || duration || ' minutes') <= DATETIME(?)
             '''
 
         # SQL 쿼리 실행
-        self.cursor.execute(query, (current_time_str, current_time_str, duration))
+        self.cursor.execute(query, (start_time_str, end_time_str))
         rows = self.cursor.fetchall()
 
         return rows
 
     def update_task(self, task_id, element_name, value):
-        if element_name == "context":
+        if element_name == "name":
             value = str(value)
         elif element_name == "date":
             value = format_datetime_str(value)
@@ -72,6 +93,29 @@ class Database:
         self.cursor.execute(f'''
                UPDATE tasks SET {element_name} = ? WHERE task_id = ?
                ''', (value, task_id))
+
+        self.conn.commit()
+
+    def update_tasks(self, tasks):
+        for task in tasks:
+
+            task_id = task.get("task_id")
+            element_name = task.get("element_name")
+            value = task.get("value")
+
+            if element_name == "name":
+                value = str(value)
+            elif element_name == "date":
+                value = format_datetime_str(value)
+            elif element_name == "duration":
+                value = int(value)
+            else:
+                print(f"There is no element[{element_name}] in Table[tasks]")
+                continue
+
+            self.cursor.execute(f'''
+                       UPDATE tasks SET {element_name} = ? WHERE task_id = ?
+                       ''', (value, task_id))
 
         self.conn.commit()
 
